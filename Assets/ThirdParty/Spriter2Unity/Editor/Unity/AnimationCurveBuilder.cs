@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2014 Andrew Jones
+Copyright (c) 2014 Andrew Jones, Dario Seyb
  Based on 'Spriter2Unity' python code by Malhavok
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,6 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,30 +33,46 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
 {
     public class AnimationCurveBuilder
     {
-        Dictionary<string, AnimationCurve[]> curveCache = new Dictionary<string, AnimationCurve[]>();
+        private class ObjectCurves
+        {
+            public bool IsSpriteKey;
+            public AnimationCurve[] Curves;
+        }
+
+        Dictionary<string, ObjectCurves> curveCache = new Dictionary<string, ObjectCurves>();
 
         public void AddCurves(AnimationClip animClip)
         {
             foreach(var kvp in curveCache)
             {
+                var curves = kvp.Value.Curves;
                 //Position curves
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localPosition.x", kvp.Value[(int)AnimationCurveIndex.LocalPositionX]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localPosition.y", kvp.Value[(int)AnimationCurveIndex.LocalPositionY]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localPosition.z", kvp.Value[(int)AnimationCurveIndex.LocalPositionZ]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localPosition.x", curves[(int)AnimationCurveIndex.LocalPositionX]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localPosition.y", curves[(int)AnimationCurveIndex.LocalPositionY]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localPosition.z", curves[(int)AnimationCurveIndex.LocalPositionZ]);
 
                 //Rotation curves
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localRotation.x", kvp.Value[(int)AnimationCurveIndex.LocalRotationX]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localRotation.y", kvp.Value[(int)AnimationCurveIndex.LocalRotationY]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localRotation.z", kvp.Value[(int)AnimationCurveIndex.LocalRotationZ]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localRotation.w", kvp.Value[(int)AnimationCurveIndex.LocalRotationW]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localRotation.x", curves[(int)AnimationCurveIndex.LocalRotationX]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localRotation.y", curves[(int)AnimationCurveIndex.LocalRotationY]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localRotation.z", curves[(int)AnimationCurveIndex.LocalRotationZ]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localRotation.w", curves[(int)AnimationCurveIndex.LocalRotationW]);
 
                 //Scale curves
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localScale.x", kvp.Value[(int)AnimationCurveIndex.LocalScaleX]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localScale.y", kvp.Value[(int)AnimationCurveIndex.LocalScaleY]);
-                animClip.SetCurve(kvp.Key, typeof(Transform), "localScale.z", kvp.Value[(int)AnimationCurveIndex.LocalScaleZ]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localScale.x", curves[(int)AnimationCurveIndex.LocalScaleX]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localScale.y", curves[(int)AnimationCurveIndex.LocalScaleY]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(Transform), "localScale.z", curves[(int)AnimationCurveIndex.LocalScaleZ]);
 
                 //IsActive curve
-                animClip.SetCurve(kvp.Key, typeof(GameObject), "m_IsActive", kvp.Value[(int)AnimationCurveIndex.IsActive]);
+                SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(GameObject), "m_IsActive", curves[(int)AnimationCurveIndex.IsActive]);
+
+                if (kvp.Value.IsSpriteKey)
+                {
+                    //Color Tint curve
+                    SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.r", curves[(int)AnimationCurveIndex.ColorR]);
+                    SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.g", curves[(int)AnimationCurveIndex.ColorG]);
+                    SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.b", curves[(int)AnimationCurveIndex.ColorB]);
+                    SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.a", curves[(int)AnimationCurveIndex.ColorA]);
+                }
             }
         }
 
@@ -89,48 +106,71 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
         public void SetCurveActiveOnly(Transform root, Transform current, float time)
         {
             var path = AnimationUtility.CalculateTransformPath(current, root);
-            var curves = GetOrCreateAnimationCurves(path);
+            var obj = GetOrCreateAnimationCurves(path);
 
             //IsActive curve
             float val = (current.gameObject.activeInHierarchy) ? 1.0f : 0.0f;
-            curves[(int)AnimationCurveIndex.IsActive].AddKey(new Keyframe(time, val, float.PositiveInfinity, float.PositiveInfinity) { tangentMode = 0 });
+            obj.Curves[(int)AnimationCurveIndex.IsActive].AddKey(new Keyframe(time, val, float.PositiveInfinity, float.PositiveInfinity) { tangentMode = 0 });
         }
 
-        private void UpdateTransformCurve(AnimationCurve[] curves, Transform current, float time, TimelineKey lastTimelineKey)
+        private void SetCurveIfNotEmpty(ref AnimationClip clip, string path, Type component, string property, AnimationCurve curve)
+        {
+            if (curve.keys.Length > 0)
+            {
+                clip.SetCurve(path, component, property, curve);
+            }
+        }
+
+        private void UpdateTransformCurve(ObjectCurves obj, Transform current, float time, TimelineKey lastTimelineKey)
         {
             float val;
             //IsActive curve
             val = (current.gameObject.activeSelf) ? 1.0f : 0.0f;
-            curves[(int)AnimationCurveIndex.IsActive].AddKey(new Keyframe(time, val, float.PositiveInfinity, float.PositiveInfinity) { tangentMode = 0 });
+            obj.Curves[(int)AnimationCurveIndex.IsActive].AddKey(new Keyframe(time, val, float.PositiveInfinity, float.PositiveInfinity) { tangentMode = 0 });
 
             //Position curves
-            curves[(int)AnimationCurveIndex.LocalPositionX].AddKey(new Keyframe(time, current.localPosition.x) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalPositionY].AddKey(new Keyframe(time, current.localPosition.y) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalPositionZ].AddKey(new Keyframe(time, current.localPosition.z, float.PositiveInfinity, float.PositiveInfinity)); //Z value always has instant transition
+            obj.Curves[(int)AnimationCurveIndex.LocalPositionX].AddKey(new Keyframe(time, current.localPosition.x) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalPositionY].AddKey(new Keyframe(time, current.localPosition.y) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalPositionZ].AddKey(new Keyframe(time, current.localPosition.z, float.PositiveInfinity, float.PositiveInfinity)); //Z value always has instant transition
 
             //Rotation curves
             var quat = Quaternion.Euler(current.localEulerAngles);
-            curves[(int)AnimationCurveIndex.LocalRotationX].AddKey(new Keyframe(time, quat.x) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalRotationY].AddKey(new Keyframe(time, quat.y) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalRotationZ].AddKey(new Keyframe(time, quat.z) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalRotationW].AddKey(new Keyframe(time, quat.w) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalRotationX].AddKey(new Keyframe(time, quat.x) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalRotationY].AddKey(new Keyframe(time, quat.y) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalRotationZ].AddKey(new Keyframe(time, quat.z) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalRotationW].AddKey(new Keyframe(time, quat.w) { tangentMode = 0 }, lastTimelineKey);
 
             //Scale curves
-            curves[(int)AnimationCurveIndex.LocalScaleX].AddKey(new Keyframe(time, current.localScale.x) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalScaleY].AddKey(new Keyframe(time, current.localScale.y) { tangentMode = 0 }, lastTimelineKey);
-            curves[(int)AnimationCurveIndex.LocalScaleZ].AddKey(new Keyframe(time, current.localScale.z) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalScaleX].AddKey(new Keyframe(time, current.localScale.x) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalScaleY].AddKey(new Keyframe(time, current.localScale.y) { tangentMode = 0 }, lastTimelineKey);
+            obj.Curves[(int)AnimationCurveIndex.LocalScaleZ].AddKey(new Keyframe(time, current.localScale.z) { tangentMode = 0 }, lastTimelineKey);
+
+            var spriteTimelineKey = lastTimelineKey as SpriteTimelineKey;
+            if (spriteTimelineKey != null)
+            {
+                obj.IsSpriteKey = true;
+                obj.Curves[(int)AnimationCurveIndex.ColorR].AddKey(new Keyframe(time, spriteTimelineKey.Tint.r) { tangentMode = 0 }, lastTimelineKey);
+                obj.Curves[(int)AnimationCurveIndex.ColorG].AddKey(new Keyframe(time, spriteTimelineKey.Tint.g) { tangentMode = 0 }, lastTimelineKey);
+                obj.Curves[(int)AnimationCurveIndex.ColorB].AddKey(new Keyframe(time, spriteTimelineKey.Tint.b) { tangentMode = 0 }, lastTimelineKey);
+                obj.Curves[(int)AnimationCurveIndex.ColorA].AddKey(new Keyframe(time, spriteTimelineKey.Tint.a) { tangentMode = 0 }, lastTimelineKey);
+            }
         }
 
-        private AnimationCurve[] GetOrCreateAnimationCurves(string path)
+        private ObjectCurves GetOrCreateAnimationCurves(string path)
         {
-            AnimationCurve[] curves;
-            if (!curveCache.TryGetValue(path, out curves))
+            ObjectCurves objCurves;
+
+            if (!curveCache.TryGetValue(path, out objCurves))
             {
-                curveCache[path] = curves = new AnimationCurve[(int)AnimationCurveIndex.ENUM_COUNT];
-                for (int i = 0; i < (int)AnimationCurveIndex.ENUM_COUNT; i++)
-                    curves[i] = new AnimationCurve();
+                objCurves = new ObjectCurves();
+                objCurves.Curves = new AnimationCurve[(int)AnimationCurveIndex.ENUM_COUNT]; 
+                for (int i = 0; i < (int) AnimationCurveIndex.ENUM_COUNT; i++)
+                {
+                    objCurves.Curves[i] = new AnimationCurve();
+                }
+                curveCache[path] = objCurves;
             }
-            return curves;
+            return objCurves;
         }
 
         private enum AnimationCurveIndex
@@ -146,6 +186,10 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             LocalScaleY,
             LocalScaleZ,
             IsActive,
+            ColorR,
+            ColorG,
+            ColorB,
+            ColorA,
             ENUM_COUNT,
         }
     }

@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2014 Andrew Jones
+Copyright (c) 2014 Andrew Jones, Dario Seyb
  Based on 'Spriter2Unity' python code by Malhavok
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,10 +20,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml;
 
 namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter

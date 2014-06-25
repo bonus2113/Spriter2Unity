@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2014 Andrew Jones
+Copyright (c) 2014 Andrew Jones, Dario Seyb
  Based on 'Spriter2Unity' python code by Malhavok
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,6 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,10 +29,24 @@ using System.Xml;
 
 namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter
 {
+    /// <summary>
+    /// Base class for all timeline keys.
+    /// </summary>
     public class TimelineKey : Key
     {
+        /// <summary>
+        /// Reference to the timeline the key is on.
+        /// </summary>
         public Timeline Timeline { get; private set; }
+
+        /// <summary>
+        /// The interpolation type to use for this key.
+        /// </summary>
         public CurveType CurveType { get; private set; }
+
+        /// <summary>
+        /// Parameters to use for interpolation (quadratic and qubic at the moment)
+        /// </summary>
         public float[] CurveParams { get; private set; }
 
         public TimelineKey(XmlElement element, Timeline timeline)
@@ -85,15 +100,6 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter
             CurveParams = curveParams
                 .Select(attr => float.Parse(attr.Value))
                 .ToArray();
-            /*
-            //Debug Output - consider using #ifdef instead
-            if(curveParams.Count > 0)
-            {
-                var curveParamString = curveParams.OfType<XmlAttribute>()
-                    .Select(attr => "\"" + attr.Name + "\":" + attr.Value)
-                    .Aggregate((current,next)=> current + ";" + next);
-                UnityEngine.Debug.Log(string.Format("Found {0} curve parameters on timeline {1}, key {2} curvetype {3} ({4})", curveParams.Count, Timeline.Name, Id, CurveType, curveParamString));
-            }*/
         }
     }
 }

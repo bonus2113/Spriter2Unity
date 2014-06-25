@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2014 Andrew Jones
+Copyright (c) 2014 Andrew Jones, Dario Seyb
  Based on 'Spriter2Unity' python code by Malhavok
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

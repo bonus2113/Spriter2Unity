@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2014 Andrew Jones
+Copyright (c) 2014 Andrew Jones, Dario Seyb
  Based on 'Spriter2Unity' python code by Malhavok
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -35,30 +35,24 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
 
     public class PrefabBuilder
     {
-        private CharacterMap charMap;
-
         public GameObject MakePrefab(Entity entity, GameObject root, string spriteFolder)
         {
             //Set the name (in case it changed)
             root.name = entity.Name;
 
-            //Build the character map first
-            var mapBuilder = new CharacterMapBuilder();
-            charMap = mapBuilder.BuildMap(entity, root, spriteFolder);
-
             //Build the GameObject hierarchy
             foreach (var animation in entity.Animations)
             {
-                MakePrefab(animation, root);
+                MakePrefab(animation, root, spriteFolder);
             }
             return root;
         }
 
-        private void MakePrefab(Animation animation, GameObject root)
+        private void MakePrefab(Animation animation, GameObject root, string spriteFolder)
         {
             foreach(var mainKey in animation.MainlineKeys)
             {
-                MakePrefab(mainKey, root);
+                MakePrefab(mainKey, root, spriteFolder);
             }
         }
 
@@ -68,29 +62,29 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             public GameObject Root;
         }
 
-        private void MakePrefab(MainlineKey mainKey, GameObject root)
+        private void MakePrefab(MainlineKey mainKey, GameObject root, string spriteFolder)
         {
             var rootInfo = mainKey.GetChildren(null).Select(child => new RefParentInfo { Ref = child, Root = root });
             Stack<RefParentInfo> toProcess = new Stack<RefParentInfo>(rootInfo);
             while(toProcess.Count > 0)
             {
                 var next = toProcess.Pop();
-                var go = MakePrefab(next.Ref, next.Root);
+                var go = MakePrefab(next.Ref, next.Root, spriteFolder);
                 foreach(var child in mainKey.GetChildren(next.Ref))
                 {
                     toProcess.Push(new RefParentInfo{Ref = child, Root = go});
                 }
             }
         }
-        
-        private GameObject MakePrefab(Ref childRef, GameObject root)
+
+        private GameObject MakePrefab(Ref childRef, GameObject root, string spriteFolder)
         {
             var timeline = childRef.Referenced.Timeline;
             var transform = root.transform.Find(timeline.Name);
             GameObject go;
             if(transform == null)
             {
-                go = MakeGameObject(childRef, root);
+                go = MakeGameObject(childRef, root, spriteFolder);
             }
             else
             {
@@ -99,7 +93,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             return go;
         }
 
-        private GameObject MakeGameObject(Ref childRef, GameObject parent)
+        private GameObject MakeGameObject(Ref childRef, GameObject parent, string spriteFolder)
         {
             TimelineKey key = childRef.Referenced;
             GameObject go = new GameObject(key.Timeline.Name);
@@ -119,7 +113,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             {
                 //Set initial sprite information
                 var sprite = go.AddComponent<SpriteRenderer>();
-                sprite.sprite = charMap.GetSprite(spriteKey.File.Folder.Id, spriteKey.File.Id);
+                sprite.sprite = AssetUtils.GetSpriteAtPath(spriteKey.File.Name, spriteFolder);
             }
 
             SetTransform(childRef, go.transform);
