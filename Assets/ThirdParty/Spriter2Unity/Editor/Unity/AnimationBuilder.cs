@@ -277,13 +277,15 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             }*/
             transform.localEulerAngles = localEulerAngles;
 
-            acb.SetCurve(root.transform, transform, time, lastKey);
-
+            int zIndex = -1;
             var spriteKey = key as SpriteTimelineKey;
             if (spriteKey != null)
             {
-                transform.GetComponent<SpriteRenderer>().sortingOrder = ((ObjectRef) childRef).ZIndex;
+                zIndex = ((ObjectRef)childRef).ZIndex;
+                //transform.GetComponent<SpriteRenderer>().sortingOrder = zIndex;
             }
+
+            acb.SetCurve(root.transform, transform, time, lastKey, zIndex);
            
 
             //Get last-used game object for this Timeline - needed to clean up reparenting

@@ -113,6 +113,8 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             {
                 //Set initial sprite information
                 var sprite = go.AddComponent<SpriteRenderer>();
+                //Hack to be able to animate the sortingOrder property
+                go.AddComponent<SortingOrderUpdate>();
                 sprite.sprite = AssetUtils.GetSpriteAtPath(spriteKey.File.Name, spriteFolder);
             }
 

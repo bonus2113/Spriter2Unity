@@ -16,6 +16,12 @@ What it does:
 Limitations (and why):
   * Only quadratic, cubic, linear and instant curves are supported
   * Mainline curves are not yet imported
+  * Only works with a "Pixels To Units" setting of 100 
+  
+Important missing features:
+  * Sounds
+  * Points
+  * Boxes
 
 ##Usage
 

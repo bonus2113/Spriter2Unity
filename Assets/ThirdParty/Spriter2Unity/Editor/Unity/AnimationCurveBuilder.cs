@@ -72,6 +72,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
                     SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.g", curves[(int)AnimationCurveIndex.ColorG]);
                     SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.b", curves[(int)AnimationCurveIndex.ColorB]);
                     SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SpriteRenderer), "m_Color.a", curves[(int)AnimationCurveIndex.ColorA]);
+                    SetCurveIfNotEmpty(ref animClip, kvp.Key, typeof(SortingOrderUpdate), "SortingOrder", curves[(int)AnimationCurveIndex.ZIndex]);
                 }
             }
         }
@@ -96,11 +97,11 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             SetCurve(root, current, time, null);
         }
 
-        public void SetCurve(Transform root, Transform current, float time, TimelineKey lastTimelineKey)
+        public void SetCurve(Transform root, Transform current, float time, TimelineKey lastTimelineKey, int zIndex = -1)
         {
             var path = AnimationUtility.CalculateTransformPath(current, root);
             var curves = GetOrCreateAnimationCurves(path);
-            UpdateTransformCurve(curves, current, time, lastTimelineKey);
+            UpdateTransformCurve(curves, current, time, lastTimelineKey, zIndex);
         }
 
         public void SetCurveActiveOnly(Transform root, Transform current, float time)
@@ -121,7 +122,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             }
         }
 
-        private void UpdateTransformCurve(ObjectCurves obj, Transform current, float time, TimelineKey lastTimelineKey)
+        private void UpdateTransformCurve(ObjectCurves obj, Transform current, float time, TimelineKey lastTimelineKey, int zIndex = -1)
         {
             float val;
             //IsActive curve
@@ -145,6 +146,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             obj.Curves[(int)AnimationCurveIndex.LocalScaleY].AddKey(new Keyframe(time, current.localScale.y) { tangentMode = 0 }, lastTimelineKey);
             obj.Curves[(int)AnimationCurveIndex.LocalScaleZ].AddKey(new Keyframe(time, current.localScale.z) { tangentMode = 0 }, lastTimelineKey);
 
+            //Sprite Curves
             var spriteTimelineKey = lastTimelineKey as SpriteTimelineKey;
             if (spriteTimelineKey != null)
             {
@@ -153,6 +155,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
                 obj.Curves[(int)AnimationCurveIndex.ColorG].AddKey(new Keyframe(time, spriteTimelineKey.Tint.g) { tangentMode = 0 }, lastTimelineKey);
                 obj.Curves[(int)AnimationCurveIndex.ColorB].AddKey(new Keyframe(time, spriteTimelineKey.Tint.b) { tangentMode = 0 }, lastTimelineKey);
                 obj.Curves[(int)AnimationCurveIndex.ColorA].AddKey(new Keyframe(time, spriteTimelineKey.Tint.a) { tangentMode = 0 }, lastTimelineKey);
+                obj.Curves[(int)AnimationCurveIndex.ZIndex].AddKey(new Keyframe(time, zIndex, float.PositiveInfinity, float.PositiveInfinity));
             }
         }
 
@@ -190,6 +193,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             ColorG,
             ColorB,
             ColorA,
+            ZIndex,
             ENUM_COUNT,
         }
     }

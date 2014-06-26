@@ -27,6 +27,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter
 {
     public static class PrefabUtils
     {
+        // TODO: Read this from the sprite meta file.
         public const float PIXEL_SCALE = 0.01f;
         public const float Z_SPACING = 0.1f;
 
@@ -65,6 +66,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter
                     localScale.y = unmapped.Scale.y;
                     localPosition.z = ((ObjectRef)childRef).ZIndex * -Z_SPACING;
                 }
+
                 localPosition *= PIXEL_SCALE;
                 localEulerAngles = new Vector3(0, 0, unmapped.Angle_Deg);
             }
