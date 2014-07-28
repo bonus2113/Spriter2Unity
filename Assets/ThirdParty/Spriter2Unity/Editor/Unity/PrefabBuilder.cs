@@ -41,7 +41,10 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             //Set the name (in case it changed)
             root.name = entity.Name;
 
-            root.AddComponent<SpriterEntity>();
+            if(!root.GetComponent<SpriterEntity>())
+            {
+                root.AddComponent<SpriterEntity>();
+            }
 
             //Build the GameObject hierarchy
             foreach (var animation in entity.Animations)
