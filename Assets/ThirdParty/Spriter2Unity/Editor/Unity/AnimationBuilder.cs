@@ -71,6 +71,8 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
                 if (originalAnimClip != null)
                 {
                     Debug.Log("Replacing animation clip " + animClip.name);
+                    AnimationEvent[] events = AnimationUtility.GetAnimationEvents(originalAnimClip);
+                    AnimationUtility.SetAnimationEvents(animClip, events);
                     EditorUtility.CopySerialized(animClip, originalAnimClip);
                     allAnimClips.Remove(originalAnimClip);
                 }
