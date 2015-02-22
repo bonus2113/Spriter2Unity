@@ -102,8 +102,12 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             var animClip = new AnimationClip();
             animClip.name = animation.Name;
 
+#if UNITY_5
+			//Not needed in Unity 5 ??
+#else
             //Set clip to Generic type
             AnimationUtility.SetAnimationType(animClip, ModelImporterAnimationType.Generic);
+#endif
 
             //Populate the animation curves & events
             MakeAnimationCurves(root, animClip, animation);
