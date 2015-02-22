@@ -197,6 +197,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter
             MethodInfo mInfo = typeof(AnimationUtility).GetMethod("SetAnimationClipSettings", bindingFlags);
             mInfo.Invoke(null, new object[] { animClip, settings });
 #endif
+
         }
     }
 }

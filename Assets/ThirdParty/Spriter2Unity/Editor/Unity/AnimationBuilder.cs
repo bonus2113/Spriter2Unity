@@ -103,7 +103,7 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
             animClip.name = animation.Name;
 
 #if UNITY_5
-			//Not needed in Unity 5 ??
+			//Not needed in Unity 5 ?? 
 #else
             //Set clip to Generic type
             AnimationUtility.SetAnimationType(animClip, ModelImporterAnimationType.Generic);
