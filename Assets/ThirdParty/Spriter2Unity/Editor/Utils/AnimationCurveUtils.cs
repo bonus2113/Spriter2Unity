@@ -190,8 +190,13 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Spriter
         {
             //Use reflection to get the internal method
             BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.NonPublic;
+#if UNITY_5
+            AnimationUtility.SetAnimationClipSettings(animClip, settings);
+#else
             MethodInfo mInfo = typeof(AnimationUtility).GetMethod("SetAnimationClipSettings", bindingFlags);
             mInfo.Invoke(null, new object[] { animClip, settings });
+#endif
+
         }
     }
 }
