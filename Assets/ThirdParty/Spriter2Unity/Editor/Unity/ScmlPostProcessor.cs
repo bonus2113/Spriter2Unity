@@ -123,7 +123,11 @@ namespace Assets.ThirdParty.Spriter2Unity.Editor.Unity
                     {
                         if (animationClip)
                         {
-                            AnimatorController.AddAnimationClipToController(controller, animationClip);
+#if UNITY_5
+                            controller.AddMotion(animationClip); 
+#else
+							AnimatorController.AddAnimationClipToController(controller, animationClip);
+#endif
                         }
                     }
                 }
